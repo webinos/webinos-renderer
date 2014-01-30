@@ -52,8 +52,8 @@ void ClientApp::InjectWebinos(CefRefPtr<CefFrame> frame)
   base::FilePath workingDir(commandLine->GetProgram().ToWString().c_str());
   base::FilePath webinosJSPath = workingDir.DirName().Append(L"..\\..\\webinos-pzp\\web_root\\webinos.js");
 #else
-  FilePath workingDir(commandLine->GetProgram());
-  FilePath webinosJSPath = workingDir.DirName().Append("..\\..\\webinos-pzp\\web_root\\webinos.js");
+  base::FilePath workingDir(commandLine->GetProgram());
+  base::FilePath webinosJSPath = workingDir.DirName().Append("..\\..\\webinos-pzp\\web_root\\webinos.js");
 #endif
 
   int64 webinosJSCodeSize;
@@ -65,7 +65,7 @@ void ClientApp::InjectWebinos(CefRefPtr<CefFrame> frame)
     workingDir = base::FilePath(commandLine->GetProgram().ToWString().c_str());
     webinosJSPath = workingDir.DirName().Append(L"webinos.js");
 #else
-    workingDir = FilePath(commandLine->GetProgram());
+    workingDir = base::FilePath(commandLine->GetProgram());
     webinosJSPath = workingDir.DirName().Append("webinos.js");
 #endif
     gotJSFile = base::GetFileSize(webinosJSPath, &webinosJSCodeSize);
@@ -124,8 +124,8 @@ void ClientApp::OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFra
     base::FilePath workingDir(commandLine->GetProgram().ToWString().c_str());
     base::FilePath bootPath = workingDir.DirName().Append(L"webinosBoot.js");
 #else
-    FilePath workingDir(commandLine->GetProgram());
-    FilePath bootPath = workingDir.DirName().Append("webinosBoot.js");
+    base::FilePath workingDir(commandLine->GetProgram());
+    base::FilePath bootPath = workingDir.DirName().Append("webinosBoot.js");
 #endif
 
     int64 bootDataSize;

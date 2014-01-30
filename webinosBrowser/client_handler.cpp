@@ -387,7 +387,7 @@ bool ClientHandler::OnBeforePopup(CefRefPtr<CefBrowser> browser,
   webinos::WidgetConfig cfg;
   if (cfg.LoadFromURL(target_url))
   {
-    CefPostTask(TID_UI, NewCefRunnableFunction(AppCreateWebinosBrowser,target_url,false,false,(HWND)NULL,0,0));
+    CefPostTask(TID_UI, NewCefRunnableFunction(AppCreateWebinosBrowser,target_url,false,false,(CefWindowHandle)NULL,0,0));
     return true;
   }
 
