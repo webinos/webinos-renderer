@@ -13,7 +13,7 @@
 #include "include/cef_frame.h"
 #include "include/cef_runnable.h"
 #include "include/cef_web_plugin.h"
-#include "base/file_path.h"
+#include "base/files/file_path.h"
 #include "base/file_util.h"
 #include "base/path_service.h"
 #include "base/values.h"
@@ -45,7 +45,7 @@ namespace
 CefRefPtr<CefCommandLine> g_command_line;
 
 base::DictionaryValue* LoadFileAsJSON(CefString path);
-base::DictionaryValue* LoadFileAsJSON(FilePath filePath);
+base::DictionaryValue* LoadFileAsJSON(base::FilePath filePath);
 
 void AppInitCommandLine(int argc, const char* const* argv) 
 {
@@ -133,95 +133,13 @@ void AppGetSettings(CefSettings& settings, CefRefPtr<ClientApp> app)
 #endif
     }
   }
-
-  // Retrieve command-line proxy configuration, if any.
-  bool has_proxy = false;
-  cef_proxy_type_t proxy_type = CEF_PROXY_TYPE_DIRECT;
-  CefString proxy_config;
-
-  if (g_command_line->HasSwitch(webinosRenderer::kProxyType)) 
-  {
-    std::string str = g_command_line->GetSwitchValue(webinosRenderer::kProxyType);
-    if (str == webinosRenderer::kProxyType_Direct) 
-    {
-      has_proxy = true;
-      proxy_type = CEF_PROXY_TYPE_DIRECT;
-    } 
-    else if (str == webinosRenderer::kProxyType_Named || str == webinosRenderer::kProxyType_Pac) 
-    {
-      proxy_config = g_command_line->GetSwitchValue(webinosRenderer::kProxyConfig);
-      if (!proxy_config.empty()) 
-      {
-        has_proxy = true;
-        proxy_type = (str == webinosRenderer::kProxyType_Named ? CEF_PROXY_TYPE_NAMED : CEF_PROXY_TYPE_PAC_STRING);
-      }
-    }
-  }
-
-  if (has_proxy) 
-  {
-    // Provide a ClientApp instance to handle proxy resolution.
-    app->SetProxyConfig(proxy_type, proxy_config);
-  }
 }
 
-// Returns the application browser settings based on command line arguments.
-//
-void AppGetBrowserSettings(CefBrowserSettings& settings) 
-{
-  ASSERT(g_command_line.get());
-  if (!g_command_line.get())
-    return;
-
-  settings.remote_fonts_disabled = g_command_line->HasSwitch(webinosRenderer::kRemoteFontsDisabled);
-
-  CefString(&settings.default_encoding) = g_command_line->GetSwitchValue(webinosRenderer::kDefaultEncoding);
-
-  settings.encoding_detector_enabled = g_command_line->HasSwitch(webinosRenderer::kEncodingDetectorEnabled);
-  settings.javascript_disabled = g_command_line->HasSwitch(webinosRenderer::kJavascriptDisabled);
-  settings.javascript_open_windows_disallowed = g_command_line->HasSwitch(webinosRenderer::kJavascriptOpenWindowsDisallowed);
-  settings.javascript_close_windows_disallowed = g_command_line->HasSwitch(webinosRenderer::kJavascriptCloseWindowsDisallowed);
-  settings.javascript_access_clipboard_disallowed = g_command_line->HasSwitch(webinosRenderer::kJavascriptAccessClipboardDisallowed);
-  settings.dom_paste_disabled = g_command_line->HasSwitch(webinosRenderer::kDomPasteDisabled);
-  settings.caret_browsing_enabled = g_command_line->HasSwitch(webinosRenderer::kCaretBrowsingDisabled);
-  settings.java_disabled = g_command_line->HasSwitch(webinosRenderer::kJavaDisabled);
-  settings.plugins_disabled = g_command_line->HasSwitch(webinosRenderer::kPluginsDisabled);
-  settings.universal_access_from_file_urls_allowed = g_command_line->HasSwitch(webinosRenderer::kUniversalAccessFromFileUrlsAllowed);
-  settings.file_access_from_file_urls_allowed = g_command_line->HasSwitch(webinosRenderer::kFileAccessFromFileUrlsAllowed);
-  settings.web_security_disabled = g_command_line->HasSwitch(webinosRenderer::kWebSecurityDisabled);
-  settings.xss_auditor_enabled = g_command_line->HasSwitch(webinosRenderer::kXssAuditorEnabled);
-  settings.image_load_disabled = g_command_line->HasSwitch(webinosRenderer::kImageLoadingDisabled);
-  settings.shrink_standalone_images_to_fit = g_command_line->HasSwitch(webinosRenderer::kShrinkStandaloneImagesToFit);
-  settings.site_specific_quirks_disabled = g_command_line->HasSwitch(webinosRenderer::kSiteSpecificQuirksDisabled);
-  settings.text_area_resize_disabled = g_command_line->HasSwitch(webinosRenderer::kTextAreaResizeDisabled);
-  settings.page_cache_disabled = g_command_line->HasSwitch(webinosRenderer::kPageCacheDisabled);
-  settings.tab_to_links_disabled = g_command_line->HasSwitch(webinosRenderer::kTabToLinksDisabled);
-  settings.hyperlink_auditing_disabled = g_command_line->HasSwitch(webinosRenderer::kHyperlinkAuditingDisabled);
-  settings.user_style_sheet_enabled = g_command_line->HasSwitch(webinosRenderer::kUserStyleSheetEnabled);
-
-  CefString(&settings.user_style_sheet_location) = g_command_line->GetSwitchValue(webinosRenderer::kUserStyleSheetLocation);
-
-  settings.author_and_user_styles_disabled = g_command_line->HasSwitch(webinosRenderer::kAuthorAndUserStylesDisabled);
-  settings.local_storage_disabled = g_command_line->HasSwitch(webinosRenderer::kLocalStorageDisabled);
-  settings.databases_disabled = g_command_line->HasSwitch(webinosRenderer::kDatabasesDisabled);
-  settings.application_cache_disabled = g_command_line->HasSwitch(webinosRenderer::kApplicationCacheDisabled);
-  settings.webgl_disabled = g_command_line->HasSwitch(webinosRenderer::kWebglDisabled);
-  settings.accelerated_compositing_disabled = g_command_line->HasSwitch(webinosRenderer::kAcceleratedCompositingDisabled);
-  settings.accelerated_layers_disabled = g_command_line->HasSwitch(webinosRenderer::kAcceleratedLayersDisabled);
-  settings.accelerated_video_disabled = g_command_line->HasSwitch(webinosRenderer::kAcceleratedVideoDisabled);
-  settings.accelerated_2d_canvas_disabled = g_command_line->HasSwitch(webinosRenderer::kAcceledated2dCanvasDisabled);
-  settings.accelerated_painting_enabled = g_command_line->HasSwitch(webinosRenderer::kAcceleratedPaintingEnabled);
-  settings.accelerated_filters_enabled = g_command_line->HasSwitch(webinosRenderer::kAcceleratedFiltersEnabled);
-  settings.accelerated_plugins_disabled = g_command_line->HasSwitch(webinosRenderer::kAcceleratedPluginsDisabled);
-  settings.developer_tools_disabled = g_command_line->HasSwitch(webinosRenderer::kDeveloperToolsDisabled);
-  settings.fullscreen_enabled = g_command_line->HasSwitch(webinosRenderer::kFullscreenEnabled);
-}
-
-bool AppParseLaunchFile(FilePath launchFile, std::string& installId, std::string& params)
+bool AppParseLaunchFile(base::FilePath launchFile, std::string& installId, std::string& params)
 {
   bool ok = false;
 
-  base::DictionaryValue* dv = LoadFileAsJSON(launchFile);
+  base::DictionaryValue* dv = LoadFileAsJSON((base::FilePath)launchFile);
   if (dv != NULL)
   {
     base::Value* dataVal;
@@ -364,9 +282,9 @@ std::string GetWebinosStartParameters(std::string url, bool sideLoading, bool is
           // First check for dummy 'launch' widget files (these files are created by the applauncher api
           // to fool the OS into launching the widget).
 #if defined (OS_WIN)
-          FilePath launchPath(CefString(url).ToWString());
+          base::FilePath launchPath(CefString(url).ToWString());
 #else
-          FilePath launchPath(CefString(url).ToString());
+          base::FilePath launchPath(CefString(url).ToString());
 #endif
           // Get the filename portion of the path.
           std::string launchFileName = CefString(launchPath.BaseName().value());
@@ -383,7 +301,7 @@ std::string GetWebinosStartParameters(std::string url, bool sideLoading, bool is
               LOG(INFO) << "side loading applauncher request " << installId.c_str();
               sprintf(startUrl,"http://localhost:%d/boot/%s%s",wrtServerPort,installId.c_str(),launchArguments.c_str());
               cfg.LoadFromURL(startUrl);
-              file_util::Delete(launchPath,false);
+              base::DeleteFile(launchPath,false);
             }
             else
             {
@@ -443,7 +361,7 @@ void AppCreateWebinosBrowser(std::string url, bool isWidget, bool sideLoading, C
 
 base::DictionaryValue* LoadFileAsJSON(CefString path)
 {
-  FilePath filePath;
+  base::FilePath filePath;
 
 #if defined (OS_WIN)
   PathService::Get(base::DIR_APP_DATA,&filePath);
@@ -456,16 +374,16 @@ base::DictionaryValue* LoadFileAsJSON(CefString path)
   return LoadFileAsJSON(filePath);
 }
 
-base::DictionaryValue* LoadFileAsJSON(FilePath filePath)
+base::DictionaryValue* LoadFileAsJSON(base::FilePath filePath)
 {
   base::DictionaryValue* dv = NULL;
 
   int64 dataSize;
-  if (file_util::GetFileSize(filePath, &dataSize))
+  if (base::GetFileSize(filePath, &dataSize))
   {
     // Allocate storage and read config data.
     char* fileData = new char[dataSize+1];
-    file_util::ReadFile(filePath, fileData, dataSize);
+    base::ReadFile(filePath, fileData, dataSize);
     fileData[dataSize] = 0;
 
     // Parse JSON.

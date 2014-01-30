@@ -93,6 +93,15 @@ int main(int argc, char* argv[])
 {  
   base::AtExitManager exit_manager;
 
+  void* sandbox_info = NULL;
+
+#if CEF_ENABLE_SANDBOX
+  // Manage the life span of the sandbox information object. This is necessary
+  // for sandbox support on Windows. See cef_sandbox_win.h for complete details.
+  CefScopedSandboxInfo scoped_sandbox;
+  sandbox_info = scoped_sandbox.sandbox_info();
+#endif
+
   CefMainArgs main_args(argc, argv);
   CefRefPtr<ClientApp> app(new ClientApp);
 
@@ -105,7 +114,7 @@ int main(int argc, char* argv[])
   AppInitCommandLine(argc, argv);
 
   // Execute the secondary process, if any.
-  int exit_code = CefExecuteProcess(main_args, app.get());
+  int exit_code = CefExecuteProcess(main_args, app.get(), sandbox_info);
   if (exit_code >= 0)
     return exit_code;
 
@@ -118,7 +127,7 @@ int main(int argc, char* argv[])
   AppGetSettings(settings, app);
 
   // Initialize CEF.
-  CefInitialize(main_args, settings, app.get());
+  CefInitialize(main_args, settings, app.get(), sandbox_info);
 
   // Register the scheme handlers.
   CefRegisterSchemeHandlerFactory("wgt", "",new webinos::WidgetSchemeHandlerFactory());
@@ -215,12 +224,9 @@ void AppCreateWindow(CefRefPtr<ClientHandler> clientHandler, bool sideLoading, C
   CefWindowInfo window_info;
   CefBrowserSettings browserSettings;
 
-  // Populate the settings based on command line arguments.
-  AppGetBrowserSettings(browserSettings);
-
   window_info.SetAsChild(vbox);
 
-  CefBrowserHost::CreateBrowserSync(window_info, static_cast<CefRefPtr<CefClient> >(clientHandler), clientHandler->GetStartUrl(), browserSettings);
+  CefBrowserHost::CreateBrowserSync(window_info, static_cast<CefRefPtr<CefClient> >(clientHandler), clientHandler->GetStartUrl(), browserSettings, NULL);
 
   gtk_container_add(GTK_CONTAINER(window), vbox);
 

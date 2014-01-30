@@ -58,6 +58,15 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmd
 
   base::AtExitManager exit_manager;
 
+  void* sandbox_info = NULL;
+
+#if CEF_ENABLE_SANDBOX
+  // Manage the life span of the sandbox information object. This is necessary
+  // for sandbox support on Windows. See cef_sandbox_win.h for complete details.
+  CefScopedSandboxInfo scoped_sandbox;
+  sandbox_info = scoped_sandbox.sandbox_info();
+#endif
+
   CefMainArgs main_args(hInstance);
   app = new ClientApp;
 
@@ -69,7 +78,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmd
   AppInitCommandLine(0, NULL);
 
   // Execute the secondary process, if any.
-  int exit_code = CefExecuteProcess(main_args, app.get());
+  int exit_code = CefExecuteProcess(main_args, app.get(),sandbox_info);
   if (exit_code >= 0)
     return exit_code;
 
@@ -82,7 +91,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmd
   settings.remote_debugging_port = 9222;
 
   // Initialize CEF.
-  CefInitialize(main_args, settings, app.get());
+  CefInitialize(main_args, settings, app.get(), sandbox_info);
 
   // Register the scheme handlers.
   CefRegisterSchemeHandlerFactory("wgt", "",new webinos::WidgetSchemeHandlerFactory());
@@ -262,12 +271,9 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
       CefWindowInfo info;
       CefBrowserSettings settings;
 
-      // Populate the settings based on command line arguments.
-      AppGetBrowserSettings(settings);
-
       info.SetAsChild(hWnd, rect);
 
-      CefBrowserHost::CreateBrowser(info,static_cast<CefRefPtr<CefClient> >(clientHandler), clientHandler->GetStartUrl(), settings);
+      CefBrowserHost::CreateBrowser(info,static_cast<CefRefPtr<CefClient> >(clientHandler), clientHandler->GetStartUrl(), settings, NULL);
 
       return 0;
     }

@@ -2,7 +2,7 @@
 #include "WidgetConfig.h"
 #include <string>
 #include <algorithm>
-#include "googleurl/src/gurl.h"
+#include "url/gurl.h"
 
 namespace webinos
 {
