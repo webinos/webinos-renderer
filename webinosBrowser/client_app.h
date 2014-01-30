@@ -16,14 +16,10 @@
 
 class ClientApp : public CefApp,
                   public CefBrowserProcessHandler,
-                  public CefProxyHandler,
                   public CefRenderProcessHandler 
 {
 public:
   ClientApp();
-
-  // Set the proxy configuration. Should only be called during initialization.
-  void SetProxyConfig(cef_proxy_type_t proxy_type, const CefString& proxy_config) { proxy_type_ = proxy_type; proxy_config_ = proxy_config; }
 
   int GetWebinosWRTPort();
   std::string GetStartUrl(std::string url, bool sideLoading, bool isWidget, webinos::WidgetConfig& cfg);
@@ -43,11 +39,7 @@ private:
   virtual CefRefPtr<CefRenderProcessHandler> GetRenderProcessHandler() OVERRIDE { return this; }
 
   // CefBrowserProcessHandler methods.
-  virtual CefRefPtr<CefProxyHandler> GetProxyHandler() OVERRIDE { return this; }
   virtual void OnContextInitialized();
-
-  // CefProxyHandler methods.
-  virtual void GetProxyForUrl(const CefString& url, CefProxyInfo& proxy_info) OVERRIDE;
 
   void InjectWebinos(CefRefPtr<CefFrame> frame);
 
@@ -55,10 +47,6 @@ private:
   virtual void OnWebKitInitialized() OVERRIDE;
   virtual void OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefRefPtr<CefV8Context> context) OVERRIDE;
   virtual void OnContextReleased(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefRefPtr<CefV8Context> context) OVERRIDE;
-
-  // Proxy configuration.
-  cef_proxy_type_t proxy_type_;
-  CefString proxy_config_;
 
   // Schemes that will be registered with the global cookie manager.
   std::vector<CefString> cookieable_schemes_;

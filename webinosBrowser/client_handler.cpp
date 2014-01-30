@@ -68,14 +68,6 @@ void ClientHandler::OnBeforeContextMenu(CefRefPtr<CefBrowser> browser, CefRefPtr
     // Add a "Show DevTools" item to all context menus.
     model->AddItem(CLIENT_ID_SHOW_DEVTOOLS, "&Show DevTools");
 
-    CefString devtools_url = browser->GetHost()->GetDevToolsURL(true);
-    if (devtools_url.empty() || m_OpenDevToolsURLs.find(devtools_url) != m_OpenDevToolsURLs.end()) 
-    {
-      // Disable the menu option if DevTools isn't enabled or if a window is
-      // already open for the current URL.
-      model->SetEnabled(CLIENT_ID_SHOW_DEVTOOLS, false);
-    }
-
     if (m_isWidget)
     {
       model->AddSeparator();
@@ -372,23 +364,30 @@ std::string ClientHandler::GetLastDownloadFile()
 
 void ClientHandler::ShowDevTools(CefRefPtr<CefBrowser> browser) 
 {
-  std::string devtools_url = browser->GetHost()->GetDevToolsURL(true);
+  CefWindowInfo windowInfo;
+  CefBrowserSettings settings;
 
-  if (!devtools_url.empty() && m_OpenDevToolsURLs.find(devtools_url) == m_OpenDevToolsURLs.end()) 
-  {
-    m_OpenDevToolsURLs.insert(devtools_url);
-    browser->GetMainFrame()->ExecuteJavaScript("window.open('" +  devtools_url + "');", "about:blank", 0);
-  }
+#if defined(OS_WIN)
+  windowInfo.SetAsPopup(browser->GetHost()->GetWindowHandle(), "DevTools");
+#endif
+
+  browser->GetHost()->ShowDevTools(windowInfo, this, settings);
 }
 
-bool ClientHandler::OnBeforePopup(CefRefPtr<CefBrowser> parentBrowser, const CefPopupFeatures& popupFeatures, CefWindowInfo& windowInfo, const CefString& url, CefRefPtr<CefClient>& client, CefBrowserSettings& settings) 
+bool ClientHandler::OnBeforePopup(CefRefPtr<CefBrowser> browser,
+                             CefRefPtr<CefFrame> frame,
+                             const CefString& target_url,
+                             const CefString& target_frame_name,
+                             const CefPopupFeatures& popupFeatures,
+                             CefWindowInfo& windowInfo,
+                             CefRefPtr<CefClient>& client,
+                             CefBrowserSettings& settings,
+                             bool* no_javascript_access)
 {
-  REQUIRE_UI_THREAD();
-
   webinos::WidgetConfig cfg;
-  if (cfg.LoadFromURL(url))
+  if (cfg.LoadFromURL(target_url))
   {
-    AppCreateWebinosBrowser(url, false, false, NULL);
+    CefPostTask(TID_UI, NewCefRunnableFunction(AppCreateWebinosBrowser,target_url,false,false,(HWND)NULL,0,0));
     return true;
   }
 
